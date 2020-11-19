@@ -1,15 +1,23 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+
 #from watchdog.observers import Observer
 #from watchdog.events import FileSystemEventHandler
 
 import os
 import re
 import argparse
+#import json
+#import time
+#import re
 import pandas as pd
+#import numpy as np
+#import datetime
+#import time
 from itertools import product
 import generateDB
+
 
 
 
@@ -27,7 +35,6 @@ ventasCols = ["year", "month", "country", "calorie_category", "flavor", "zone", 
 factCols = ["year", "month", "sales", "id_region", "id_product"]
 prodCols = ["id_product", "calorie_category", "product", "product_brand", "producer"]
 regionCols = ["id_region", "country", "region"]
-
 
 
 
@@ -91,6 +98,7 @@ def createMappingfile(tableName, realtimeFile = None, processedDataPath = proces
 
 
 
+
 def createData(newDataPath, df, clearData, datos, macro=False):
     """Toma DataFrame (df) y lo carga en el nuevo path (newDataPath) utilizando una etiqueta como macro. 
     Limpiará el cache si clearData es True"""
@@ -118,6 +126,7 @@ def createData(newDataPath, df, clearData, datos, macro=False):
 
 
 
+
 def load2PathYYYYMM(df, destPath, yearCol = "year", monthCol = "month", datos="tamales_inc", clearData = False, startDate = startDate):
     """
     Carga datos que se encuentran en el mismo directorio y los acomoda en datos crudos de acuerdo a su fecha.
@@ -139,6 +148,7 @@ def load2PathYYYYMM(df, destPath, yearCol = "year", monthCol = "month", datos="t
         dataWithDate = df.loc[years & months]
         
         createData(newDestPath, dataWithDate, clearData, datos, YYYYMM)
+
 
 
 
@@ -225,6 +235,7 @@ def placeRaw2path(folder, destPath, rootDir=rootDir, clearData = False):
 
 
 
+
 def loadTamalesInc():    
     print("Cargando datos de Tamales Inc.")
     df = loadFromDataPath(tamales, ventasCols)
@@ -248,6 +259,7 @@ def loadTeinventoInc():
 
 
 
+
 def insertRowsTamales(con_tamales):
     generateDB.sqlInsertRegion(con_tamales, os.path.join(rootDir,processedDataPath,"region_table_tamales_inc.csv"))
     generateDB.sqlInsertProductTamales(con_tamales, os.path.join(rootDir,processedDataPath,'product_table_tamales_inc.csv'))
@@ -259,7 +271,7 @@ def insertRowsTamales(con_tamales):
             if YYYYMMRegex.match(file):
                 match = YYYYMMRegex.search(file)
                 YYYYMM = match.group(2) 
-                newFile = os.path.join(rootDir,processedDataPath,file)
+                newFile = os.path.join(rootDir,processedDataPath,YYYYMM,file)
                 generateDB.sqlInsertTamalesInc(con_tamales, newFile, YYYYMM)
 def insertRowsTeinvento(con_teinvento):
     generateDB.sqlInsertRegion(con_teinvento, os.path.join(rootDir,processedDataPath,"region_dim.csv"))
@@ -272,7 +284,7 @@ def insertRowsTeinvento(con_teinvento):
             if YYYYMMRegex.match(file):
                 match = YYYYMMRegex.search(file)
                 YYYYMM = match.group(2) 
-                newFile = os.path.join(rootDir,processedDataPath,file)
+                newFile = os.path.join(rootDir,processedDataPath,YYYYMM,file)
                 generateDB.sqlInsertTeinventoInc(con_teinvento, newFile, YYYYMM)
 
 
@@ -290,4 +302,10 @@ if __name__ == "__main__":
 
     con_tamales.close()
     con_teinvento.close()
+
+
+# In[ ]:
+
+
+
 
