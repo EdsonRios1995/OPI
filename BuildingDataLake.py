@@ -8,18 +8,9 @@
 import os
 import re
 import argparse
-#import json
-#import time
-#import re
 import pandas as pd
-#import numpy as np
-#import datetime
-#import time
 from itertools import product
 import generateDB
-
-
-
 
 
 rootDir = os.getcwd()
@@ -36,9 +27,6 @@ factCols = ["year", "month", "sales", "id_region", "id_product"]
 prodCols = ["id_product", "calorie_category", "product", "product_brand", "producer"]
 regionCols = ["id_region", "country", "region"]
 
-
-
-
 def loadFromDataPath(dataPath, cols):
     dataFrames = []
     for subdir, dirs, files in os.walk(dataPath):
@@ -49,10 +37,6 @@ def loadFromDataPath(dataPath, cols):
                 dataFrames.append(dataFrame)
     df = pd.concat(dataFrames)    
     return(df)
-
-
-
-
 
 def createMappingfile(tableName, realtimeFile = None, processedDataPath = processedDataPath):
     """Esta función devuelve region_table y product_table para los datos de tamales"""
@@ -95,10 +79,6 @@ def createMappingfile(tableName, realtimeFile = None, processedDataPath = proces
         newtable_df.to_csv(MappingFile,index=keepIndex,sep=",")
     return(newtable_df)
 
-
-
-
-
 def createData(newDataPath, df, clearData, datos, macro=False):
     """Toma DataFrame (df) y lo carga en el nuevo path (newDataPath) utilizando una etiqueta como macro. 
     Limpiará el cache si clearData es True"""
@@ -123,10 +103,6 @@ def createData(newDataPath, df, clearData, datos, macro=False):
             print("Cargando datos para "+filename)
             df.to_csv(newFile,index=False,sep=",")
 
-
-
-
-
 def load2PathYYYYMM(df, destPath, yearCol = "year", monthCol = "month", datos="tamales_inc", clearData = False, startDate = startDate):
     """
     Carga datos que se encuentran en el mismo directorio y los acomoda en datos crudos de acuerdo a su fecha.
@@ -148,10 +124,6 @@ def load2PathYYYYMM(df, destPath, yearCol = "year", monthCol = "month", datos="t
         dataWithDate = df.loc[years & months]
         
         createData(newDestPath, dataWithDate, clearData, datos, YYYYMM)
-
-
-
-
 
 def loadTamalRaw2Proc(rawDataPath = rawDataPath, processedDataPath=processedDataPath, clearData = False, startDate = startDate):
     """
@@ -209,10 +181,6 @@ def loadTamalRaw2Proc(rawDataPath = rawDataPath, processedDataPath=processedData
             
             createData(newProcessedDataPath, df1Grouped, clearData, datos, YYYYMM)
 
-
-
-
-
 def placeRaw2path(folder, destPath, rootDir=rootDir, clearData = False):
     path2Folder = os.path.join(rootDir,folder)
     newDataPath = os.path.join(rootDir,destPath)
@@ -232,10 +200,6 @@ def placeRaw2path(folder, destPath, rootDir=rootDir, clearData = False):
             dfData = loadFromDataPath(subDir,regionCols)
             createData(newDataPath, dfData, clearData, "region_dim")
 
-
-
-
-
 def loadTamalesInc():    
     print("Cargando datos de Tamales Inc.")
     df = loadFromDataPath(tamales, ventasCols)
@@ -244,10 +208,6 @@ def loadTamalesInc():
     print("Cargando datos procesados...")
     loadTamalRaw2Proc()
 
-
-
-
-
 def loadTeinventoInc():
     """No proceso estos datos, sólo los ubico en los dataPath mencionados, y los separo si tienen columna year y month"""
     print("Cargando datos de Teinvento Inc.")
@@ -255,10 +215,6 @@ def loadTeinventoInc():
     placeRaw2path("teinvento_inc", rawDataPath)
     print("Cargando datos procesados...")
     placeRaw2path("teinvento_inc", processedDataPath)
-
-
-
-
 
 def insertRowsTamales(con_tamales):
     generateDB.sqlInsertRegion(con_tamales, os.path.join(rootDir,processedDataPath,"region_table_tamales_inc.csv"))
@@ -273,6 +229,7 @@ def insertRowsTamales(con_tamales):
                 YYYYMM = match.group(2) 
                 newFile = os.path.join(rootDir,processedDataPath,YYYYMM,file)
                 generateDB.sqlInsertTamalesInc(con_tamales, newFile, YYYYMM)
+                      
 def insertRowsTeinvento(con_teinvento):
     generateDB.sqlInsertRegion(con_teinvento, os.path.join(rootDir,processedDataPath,"region_dim.csv"))
     generateDB.sqlInsertProductTeinvento(con_teinvento, os.path.join(rootDir,processedDataPath,'product_dim.csv'))
@@ -289,8 +246,6 @@ def insertRowsTeinvento(con_teinvento):
 
 
 
-
-
 if __name__ == "__main__":
     loadTamalesInc()
     loadTeinventoInc()
@@ -302,10 +257,3 @@ if __name__ == "__main__":
 
     con_tamales.close()
     con_teinvento.close()
-
-
-# In[ ]:
-
-
-
-
