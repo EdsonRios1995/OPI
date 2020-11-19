@@ -38,13 +38,27 @@ def csv2Array(file,YYYYMM = None):
       try:
         next(f)
         entities = list(csv.reader(f))
+        
         if YYYYMM:
-          entities.insert(0,YYYYMM[4:])
-          entities.insert(0,YYYYMM[:4])
+          for entity in entities:
+            entity.insert(0,YYYYMM[4:])
+            entity.insert(0,YYYYMM[:4])
         return entities
       except:
         print('An error has occured')
-
+def csv2ArrayTeinvento(file,YYYYMM = None):
+  if os.path.exists(file):
+    with open(file, newline='') as f:
+      try:
+        next(f)
+        entities = list(csv.reader(f))
+        
+        if YYYYMM:
+          for entity in entities:
+            entity[1] = YYYYMM[4:]
+        return entities
+      except:
+        print('An error has occured')
 def sqlInsertRegion(con, path2data):
   try:
     entities = csv2Array(path2data)
@@ -80,7 +94,6 @@ def sqlInsertTamalesInc(con, path2data, YYYYMM):
     entities = csv2Array(path2data,YYYYMM)
     if entities:
       cursorObj = con.cursor()
-
       cursorObj.executemany('INSERT INTO tamales_inc(year, month, id_product_FK, id_region_FK, sales, monthly_sales_acc, diff_prev_month_perc) VALUES(?, ?, ?, ?, ?, ?, ?)', entities)
       con.commit()
       print('Data inserted into tamales_inc table')
@@ -109,7 +122,7 @@ def sqlInsertProductTeinvento(con, path2data):
 
 def sqlInsertTeinventoInc(con, path2data,YYYYMM):
   try:
-    entities = csv2Array(path2data,YYYYMM)
+    entities = csv2ArrayTeinvento(path2data,YYYYMM)
     if entities:
       cursorObj = con.cursor()
       cursorObj.executemany('INSERT INTO teinvento_inc(year, month, sales, id_region_FK, id_product_FK) VALUES(?, ?, ?, ?, ?)', entities)
