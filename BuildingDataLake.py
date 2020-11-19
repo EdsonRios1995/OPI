@@ -147,7 +147,7 @@ def loadTamalRaw2Proc(rawDataPath = rawDataPath, processedDataPath=processedData
     """
     Loads processed data from Raw data. 
     """
-    region_df = createMappingfile("region_table")
+    region_df = createMappingfile("region_table").reset_index()
     product_df = createMappingfile("product_table")
     datos = "tamales_inc"
     #We use regex to make sure we only load tamales
