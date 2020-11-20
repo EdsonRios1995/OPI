@@ -166,16 +166,24 @@ def loadTamalRaw2Proc(rawDataPath = rawDataPath, processedDataPath=processedData
                 df1Grouped["diff_prev_month_perc"] = None
                 for index, rows in df1Grouped_prev.iterrows():
                         
-                    
                     #Calculamos nuevo acumulado
-                    df1Grouped.loc[(df1Grouped["product"]==rows["product"]) & (df1Grouped["id_region"]==rows["id_region"]),
-                                   ["monthly_sales_acc"]] += rows["monthly_sales_acc"]
-                    #Calculamos nuevo porcentaje
-                    prevSales = df1Grouped.loc[(df1Grouped["product"]==rows["product"]) & (df1Grouped["id_region"]==rows["id_region"]),
-                                               "monthly_sales"].item()
-                    newPercentage = ((prevSales/rows["monthly_sales"] - 1)*100)
-                    df1Grouped.loc[(df1Grouped["product"]==rows["product"]) & (df1Grouped["id_region"]==rows["id_region"]),
-                               ["diff_prev_month_perc"]] = newPercentage
+                    
+                    #Si el siguiente mes no vende de un tamal, queremos asegurarnos de no pasar un df vacío
+                    if df1Grouped.loc[(df1Grouped["product"]==rows["product"]) &
+                                      (df1Grouped["id_region"]==rows["id_region"]),
+                                      ["monthly_sales_acc"]].empty:
+
+                        df1Grouped["monthly_sales_acc"] = rows["monthly_sales"]
+                        df1Grouped["diff_prev_month_perc"] = 0
+                    else:
+                        df1Grouped.loc[(df1Grouped["product"]==rows["product"]) & (df1Grouped["id_region"]==rows["id_region"]),
+                                       ["monthly_sales_acc"]] += rows["monthly_sales_acc"]
+                        #Calculamos nuevo porcentaje
+                        prevSales = df1Grouped.loc[(df1Grouped["product"]==rows["product"]) & (df1Grouped["id_region"]==rows["id_region"]),
+                                                   "monthly_sales"].item()
+                        newPercentage = ((prevSales/rows["monthly_sales"] - 1)*100)
+                        df1Grouped.loc[(df1Grouped["product"]==rows["product"]) & (df1Grouped["id_region"]==rows["id_region"]),
+                                   ["diff_prev_month_perc"]] = newPercentage
 
                 df1Grouped_prev = df1Grouped.copy()
             
