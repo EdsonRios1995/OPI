@@ -150,44 +150,55 @@ def loadTamalRaw2Proc(rawDataPath = rawDataPath, processedDataPath=processedData
             #We map region_id to zone
             df1['zone'] = df1['zone'].map(region_df.set_index('zone')['id_region'])
             df1Grouped = df1[["product_code","zone","sales"]].groupby(["product_code","zone"]).sum().reset_index()
-            df1Grouped.rename(columns = {"product_code":"product","sales":"monthly_sales", "zone":"id_region"}, inplace = True)
-            
-            #Pendiente: arreglar error en 202003 cuando se incluyen nuevos valores
-            if 202002 < int(YYYYMM):
-                break
+            this_df = df1Grouped.rename(columns = {"product_code":"product","sales":"monthly_sales", "zone":"id_region"})
+
+            #Useful ID
+            this_df["UniqueID"] = this_df["product"].str.cat(this_df["id_region"].astype(str))
             #Empezando el año
             if file.endswith("01.csv"):
-                df1Grouped["monthly_sales_acc"] = df1Grouped["monthly_sales"]
-                df1Grouped["diff_prev_month_perc"] = None
-                df1Grouped_prev = df1Grouped.copy()
+                this_df["monthly_sales_acc"] = this_df["monthly_sales"]
+                this_df["diff_prev_month_perc"] = None
+                last_df = this_df.copy()
+                
+            #El resto del año
             else:
-                #Aseguramos que el se creen columnas con datos para producto nuevo
-                df1Grouped["monthly_sales_acc"] = df1Grouped["monthly_sales"]
-                df1Grouped["diff_prev_month_perc"] = None
-                for index, rows in df1Grouped_prev.iterrows():
-                        
-                    #Calculamos nuevo acumulado
-                    
-                    #Si el siguiente mes no vende de un tamal, queremos asegurarnos de no pasar un df vacío
-                    if df1Grouped.loc[(df1Grouped["product"]==rows["product"]) &
-                                      (df1Grouped["id_region"]==rows["id_region"]),
-                                      ["monthly_sales_acc"]].empty:
+                #Más fácil trabajar con intersección y diferencias de subset
+                this_IDs = this_df[["UniqueID"]]
+                last_IDs = last_df[["UniqueID"]]
+                
+                #Intersección:
+                inter = this_IDs.merge(last_IDs)
 
-                        df1Grouped["monthly_sales_acc"] = rows["monthly_sales"]
-                        df1Grouped["diff_prev_month_perc"] = 0
+                #Diferencias
+                #onlyThis = this_IDs[this_IDs.UniqueID.isin(last_IDs.UniqueID) == False]
+                onlyLast = last_IDs[last_IDs.UniqueID.isin(this_IDs.UniqueID) == False]
+                
+                #Iniciamos los valores, De esta manera nos encargamos de onlythis
+                #acumulado
+                this_df["monthly_sales_acc"] = this_df["monthly_sales"]
+                #porcentaje
+                this_df["diff_prev_month_perc"] = None
+                
+                #Para la intersección
+                for index, rows in last_df.iterrows():
+                    if rows["UniqueID"] in inter["UniqueID"].values:
+                        #acumulado
+                        this_df.loc[this_df["UniqueID"]==rows["UniqueID"],["monthly_sales_acc"]] += rows["monthly_sales_acc"]
+                        #porcentaje
+                        thisSales = this_df.loc[this_df["UniqueID"]==rows["UniqueID"],"monthly_sales"].item()
+                        percentage = (thisSales/rows["monthly_sales"]-1)*100
+                        this_df.loc[this_df["UniqueID"]==rows["UniqueID"],["diff_prev_month_perc"]] = percentage
                     else:
-                        df1Grouped.loc[(df1Grouped["product"]==rows["product"]) & (df1Grouped["id_region"]==rows["id_region"]),
-                                       ["monthly_sales_acc"]] += rows["monthly_sales_acc"]
-                        #Calculamos nuevo porcentaje
-                        prevSales = df1Grouped.loc[(df1Grouped["product"]==rows["product"]) & (df1Grouped["id_region"]==rows["id_region"]),
-                                                   "monthly_sales"].item()
-                        newPercentage = ((prevSales/rows["monthly_sales"] - 1)*100)
-                        df1Grouped.loc[(df1Grouped["product"]==rows["product"]) & (df1Grouped["id_region"]==rows["id_region"]),
-                                   ["diff_prev_month_perc"]] = newPercentage
+                        continue
+                
+                #Agregamos valores de onlyLast:
+                if not onlyLast.empty:
+                    onlyLastRecords = last_df[last_df.UniqueID.isin(onlyLast.UniqueID)]
+                    this_df = this_df.append(onlyLastRecords,ignore_index=True)
 
-                df1Grouped_prev = df1Grouped.copy()
+                last_df = this_df.copy()
             
-            createData(newProcessedDataPath, df1Grouped, clearData, datos, YYYYMM)
+            createData(newProcessedDataPath, this_df.drop(columns=['UniqueID']), clearData, datos, YYYYMM)
 
 def placeRaw2path(folder, destPath, rootDir=rootDir, clearData = False):
     path2Folder = os.path.join(rootDir,folder)
