@@ -21,8 +21,8 @@ def sql_connection(db_name):
 def sqlCreateTamalesIncTables(con):
   cursorObj = con.cursor()
   cursorObj.execute("CREATE TABLE if not exists region_dim(id_region integer PRIMARY KEY, country text, region text)")
-  cursorObj.execute("CREATE TABLE if not exists product_dim_tamales(id_product integer PRIMARY KEY, calorie_category text, product_name text, flavor text)")
-  cursorObj.execute("CREATE TABLE if not exists tamales_inc(year integer, month text, sales numeric, monthly_sales_acc numeric, diff_prev_month_perc numeric, id_product_FK integer, id_region_FK integer, FOREIGN KEY(id_product_FK) REFERENCES product_dim_tamales(id_product), FOREIGN KEY(id_region_FK) REFERENCES region_dim(id_region))")
+  cursorObj.execute("CREATE TABLE if not exists product_dim_tamales(id_product text PRIMARY KEY, calorie_category text, product_name text, flavor text)")
+  cursorObj.execute("CREATE TABLE if not exists tamales_inc(year integer, month text, sales numeric, monthly_sales_acc numeric, diff_prev_month_perc numeric, id_product_FK text, id_region_FK integer, FOREIGN KEY(id_product_FK) REFERENCES product_dim_tamales(id_product), FOREIGN KEY(id_region_FK) REFERENCES region_dim(id_region))")
   con.commit()
 
 def sqlCreateTeinventoIncTables(con):
